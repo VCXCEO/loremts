@@ -16,3 +16,5 @@
   open = true
 [notifications]
   versionUpdates = ["latest"]
+[functions]
+  notifyUnreadMessages = "api/src/functions/notifyUnreadMessages/notifyUnreadMessages"

@@ -7,6 +7,7 @@
     ]
   },
   "devDependencies": {
+    "@redwoodjs/auth-dbauth-setup": "4.4.3",
     "@redwoodjs/core": "4.4.3"
   },
   "eslintConfig": {
@@ -20,5 +21,23 @@
   "prisma": {
     "seed": "yarn rw exec seed"
   },
-  "packageManager": "yarn@3.5.0"
+  "packageManager": "yarn@3.5.0",
+  "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@magicbell/core": "^5.0.3",
+    "@magicbell/magicbell-react": "^10.5.0",
+    "@mui/icons-material": "^5.11.11",
+    "@mui/material": "^5.11.15",
+    "@mui/x-data-grid": "^6.0.4",
+    "@sendgrid/mail": "^7.7.0",
+    "@uploadcare/react-widget": "^2.4.2",
+    "crypto-js": "^4.1.1",
+    "framer-motion": "^10.10.0",
+    "magicbell": "^1.4.2",
+    "node-schedule": "^2.1.1",
+    "pusher": "^5.1.2",
+    "pusher-js": "^8.0.2",
+    "react-uploader": "^3.13.0"
+  }
 }

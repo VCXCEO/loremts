@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -10,9 +10,338 @@ generator client {
 
 // Define your own datamodels here and run `yarn redwood prisma migrate dev`
 // to create migrations for them and apply to your dev DB.
-// TODO: Please remove the following example:
-model UserExample {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+
+model User {
+  id                        Int                         @id @default(autoincrement())
+  firstName                 String?
+  lastName                  String?
+  email                     String                      @unique
+  roles                     String[]                    @default(["user"])
+  profilePicture            String?
+  firstLogin                Boolean                     @default(true)
+  hashedPassword            String
+  salt                      String
+  resetToken                String?
+  resetTokenExpiresAt       DateTime?
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime?                   @updatedAt
+  company                   Company?                    @relation(fields: [companyId, companyName], references: [id, name])
+  companyId                 Int?
+  companyName               String?
+  calls                     Call[]
+  emails                    Email[]
+  customerToUserChats       CustomerToUserChat[]
+  userToUserChats           UserToUserChat[]
+  userToUserChatMessage     UserToUserChatMessage[]
+  customerToUserChatMessage CustomerToUserChatMessage[]
+  companyNotes              CompanyNote[]
+  customerNotes             CustomerNote[]
+  callNotes                 CallNote[]
+  userToUserChatNotes       UserToUserChatNote[]
+  customerToUserChatNotes   CustomerToUserChatNote[]
+  emailNotes                EmailNote[]
+  escalationNotes           EscalationNote[]
+}
+
+model Company {
+  id                  Int                  @id @default(autoincrement())
+  name                String               @unique
+  industry            String
+  domain              String               @unique
+  companyLogo         String
+  emailAddress        String
+  phoneNumber         String
+  chatIdentifier      String               @unique
+  apiKey              String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  users               User[]
+  calls               Call[]
+  emails              Email[]
+  escalations         Escalation[]
+  userToUserChats     UserToUserChat[]
+  customerToUserChats CustomerToUserChat[]
+  customers           Customer[]
+  companyNotes        CompanyNote[]
+  companyBillings     CompanyBilling[]
+
+  @@unique([id, name])
+  @@unique([id, name, chatIdentifier])
+}
+
+model CompanyNote {
+  id          Int      @id @default(autoincrement())
+  note        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId, companyName], references: [id, name])
+  companyId   Int
+  companyName String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+}
+
+model CompanyBilling {
+  id                 Int      @id @default(autoincrement())
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  billingAmount      Int
+  renewalDate        DateTime
+  renewalFrequency   String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  company            Company  @relation(fields: [companyId], references: [id])
+  companyId          Int
+}
+
+model Customer {
+  id                         Int                      @id @unique @default(autoincrement())
+  firstName                  String?
+  lastName                   String?
+  email                      String?                  @unique
+  phone                      String?                  @unique
+  transactionId              String[]
+  internalSatisfactionRating Int?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  companies                  Company[]
+  calls                      Call[]
+  emails                     Email[]
+  escalations                Escalation[]
+  customerToUserChats        CustomerToUserChat[]
+  customerNotes              CustomerNote[]
+  callNotes                  CallNote[]
+  customerToUserChatNotes    CustomerToUserChatNote[]
+  emailNotes                 EmailNote[]
+
+  @@unique([id, email, phone])
+  @@unique([id, phone])
+  @@unique([id, email])
+}
+
+model CustomerNote {
+  id            Int      @id @default(autoincrement())
+  note          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  customer      Customer @relation(fields: [customerId, customerEmail, customerPhone], references: [id, email, phone])
+  customerId    Int
+  customerEmail String
+  customerPhone String
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+
+model Call {
+  id                         Int        @id @default(autoincrement())
+  callDirection              String
+  callDuration               Int
+  record                     String
+  dateReceived               DateTime
+  tags                       String[]
+  satisfactionRating         Int?
+  internalSatisfactionRating Int?
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+  customer                   Customer   @relation(fields: [customerId, customerPhone], references: [id, phone])
+  customerId                 Int
+  customerPhone              String
+  company                    Company    @relation(fields: [companyId, companyName], references: [id, name])
+  companyId                  Int
+  companyName                String
+  user                       User?      @relation(fields: [userId], references: [id])
+  userId                     Int?
+  callNotes                  CallNote[]
+
+  @@unique([id, record])
+}
+
+model CallNote {
+  id            Int      @id @default(autoincrement())
+  note          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  call          Call     @relation(fields: [callId], references: [id])
+  callId        Int
+  customer      Customer @relation(fields: [customerId, customerPhone], references: [id, phone])
+  customerId    Int
+  customerPhone String
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+
+model UserToUserChat {
+  id                     Int                     @id @default(autoincrement())
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  users                  User[]
+  userToUserChatMessages UserToUserChatMessage[]
+  userToUserChatNotes    UserToUserChatNote[]
+  Company                Company?                @relation(fields: [companyId, companyName], references: [id, name])
+  companyId              Int?
+  companyName            String?
+}
+
+model UserToUserChatNote {
+  id               Int            @id @default(autoincrement())
+  note             String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  userToUserChat   UserToUserChat @relation(fields: [userToUserChatId], references: [id])
+  userToUserChatId Int
+  user             User           @relation(fields: [userId], references: [id])
+  userId           Int
+}
+
+model UserToUserChatMessage {
+  id               Int            @id @default(autoincrement())
+  messageText      String
+  isRead           Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  userToUserChat   UserToUserChat @relation(fields: [userToUserChatId], references: [id])
+  userToUserChatId Int
+  user             User?          @relation(fields: [userId], references: [id])
+  userId           Int?
+}
+
+model CustomerToUserChat {
+  id                         Int                         @id @default(autoincrement())
+  tags                       String[]
+  satisfactionRating         Int?
+  internalSatisfactionRating Int?
+  token                      String
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  customer                   Customer                    @relation(fields: [customerId, customerEmail], references: [id, email])
+  customerId                 Int
+  customerEmail              String
+  company                    Company                     @relation(fields: [companyId, companyName, companyChatIdentifier], references: [id, name, chatIdentifier])
+  companyId                  Int
+  companyName                String
+  companyChatIdentifier      String
+  users                      User[]
+  customerToUserChatMessages CustomerToUserChatMessage[]
+  customerToUserChatNotes    CustomerToUserChatNote[]
+}
+
+model CustomerToUserChatNote {
+  id                   Int                @id @default(autoincrement())
+  note                 String
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  customerToUserChat   CustomerToUserChat @relation(fields: [customerToUserChatId], references: [id])
+  customerToUserChatId Int
+  customer             Customer           @relation(fields: [customerId, customerEmail], references: [id, email])
+  customerId           Int
+  customerEmail        String
+  user                 User               @relation(fields: [userId], references: [id])
+  userId               Int
+}
+
+model CustomerToUserChatMessage {
+  id                   Int                @id @default(autoincrement())
+  messageText          String
+  isRead               Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  customerToUserChat   CustomerToUserChat @relation(fields: [customerToUserChatId], references: [id])
+  customerToUserChatId Int
+  user                 User?              @relation(fields: [userId], references: [id])
+  userId               Int?
+}
+
+model Email {
+  id                         Int                    @id @default(autoincrement())
+  conversationId             String                 @unique
+  inbox                      String
+  handleTime                 Int
+  dateReceived               DateTime
+  subject                    String
+  tags                       String[]
+  satisfactionRating         Int?
+  internalSatisfactionRating Int?
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+  customer                   Customer               @relation(fields: [customerId, customerEmail], references: [id, email])
+  customerId                 Int
+  customerEmail              String
+  company                    Company                @relation(fields: [companyId, companyName], references: [id, name])
+  companyId                  Int
+  companyName                String
+  user                       User?                  @relation(fields: [userId], references: [id])
+  userId                     Int?
+  emailNotes                 EmailNote[]
+  emailMessagesSent          EmailMessageSent[]
+  emailMessagesReceived      EmailMessageReceived[]
+
+  @@unique([id, conversationId])
+}
+
+model EmailMessageSent {
+  id                  Int      @id @default(autoincrement())
+  messageId           String   @unique
+  conversationId      String
+  extract             String
+  handleTime          Int
+  dateReceived        DateTime
+  email               Email    @relation(fields: [emailId, emailConversationId], references: [id, conversationId])
+  emailId             Int
+  emailConversationId String
+}
+
+model EmailMessageReceived {
+  id                  Int      @id @default(autoincrement())
+  messageId           String   @unique
+  conversationId      String
+  extract             String
+  handleTime          Int
+  dateReceived        DateTime
+  Email               Email?   @relation(fields: [emailId, emailConversationId], references: [id, conversationId])
+  emailId             Int?
+  emailConversationId String?
+}
+
+model EmailNote {
+  id            Int      @id @default(autoincrement())
+  note          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  email         Email    @relation(fields: [emailId], references: [id])
+  emailId       Int
+  customer      Customer @relation(fields: [customerId, customerEmail], references: [id, email])
+  customerId    Int
+  customerEmail String
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+
+model Escalation {
+  id              Int              @id @default(autoincrement())
+  type            String
+  record          String
+  reason          String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  customer        Customer?        @relation(fields: [customerId, customerEmail, customerPhone], references: [id, email, phone])
+  customerId      Int?
+  customerEmail   String?
+  customerPhone   String?
+  company         Company          @relation(fields: [companyId, companyName], references: [id, name])
+  companyId       Int
+  companyName     String
+  escalationNotes EscalationNote[]
+
+  @@unique([id, record])
+}
+
+model EscalationNote {
+  id           Int        @id @default(autoincrement())
+  note         String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  escalation   Escalation @relation(fields: [escalationId], references: [id])
+  escalationId Int
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
 }

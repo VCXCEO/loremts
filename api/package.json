@@ -4,6 +4,10 @@
   "private": true,
   "dependencies": {
     "@redwoodjs/api": "4.4.3",
-    "@redwoodjs/graphql-server": "4.4.3"
+    "@redwoodjs/auth-dbauth-api": "4.4.3",
+    "@redwoodjs/graphql-server": "4.4.3",
+    "faktory-client": "^0.6.1",
+    "faktory-worker": "^4.5.1",
+    "node-cron": "^3.0.2"
   }
 }
